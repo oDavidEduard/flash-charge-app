@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String    
+  email     String    @unique
+  passwordHash  String @map("password_hash")
+  role      Role      @default(USER)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  submittedChargers   Charger[]     @relation("SubmittedChargers")
+  submittedRequests   ChargerRequest[] @relation("SubmittedRequests")
+  reviewedRequests    ChargerRequest[]  @relation("ReviewedRequests")
+
+  @@map("users")
+}
+
+model Charger{
+  id      Int     @id @default(autoincrement())
+  name    String
+  address String
+  latitude  Decimal @db.Decimal(10, 8)
+  longitude Decimal @db.Decimal(11, 8)
+  chargerType String  @map("charger_type")
+  powerKw   Decimal  @map("power_kw") @db.Decimal(5, 2)
+  pricePerKwh Decimal?  @map("price_per_kwh") @db.Decimal(5, 2)
+  available Boolean   @default(true)
+  submittedById Int?  @map("submitted_by")
+  approvedAt  DateTime  @default(now()) @map("approved_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  submittedBy  User?  @relation("SubmittedChargers", fields: [submittedById], references: [id], onDelete: SetNull)
+
+  @@index([latitude, longitude])
+  @@index([available])
+  @@map("chargers")
+}
+
+model ChargerRequest{
+  id      Int     @id @default(autoincrement())
+  name    String
+  address String
+  latitude  Decimal @db.Decimal(10, 8)
+  longitude Decimal @db.Decimal(11, 8)
+  chargerType String  @map("charger_type")
+  powerKw   Decimal  @map("power_kw") @db.Decimal(5, 2)
+  pricePerKwh Decimal?  @map("price_per_kwh") @db.Decimal(5, 2)
+  status    RequestStatus   @default(PENDING)
+  submittedById Int  @map("submitted_by")
+  reviewedById  Int?   @map("reviewed_by")
+  notes         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  reviewedAt    DateTime? @map("reviewed_at")
+
+  submittedBy   User      @relation("SubmittedRequests", fields: [submittedById], references: [id], onDelete: Cascade)
+  reviewedBy    User?     @relation("ReviewedRequests", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([submittedById])
+  @@map("charger_requests")
+}
+
+enum Role{
+  USER  @map("user")
+  ADMIN @map("admin")
+}
+
+enum RequestStatus{
+  PENDING @map("pending")
+  APPROVED  @map("approved")
+  REJECTED  @map("rejected")
+}
+
