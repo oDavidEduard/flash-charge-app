@@ -1,7 +1,10 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
+import 'dotenv/config';
+import express from 'express';
+import cors from "cors";
+import { PrismaClient } from "@prisma/client";
+import authRoutes from "./config/routes/auth.js";
+import chargerRoutes from "./config/routes/chargerRoute.js";
+import requestsRoutes from "./config/routes/requestsRoute.js";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -33,6 +36,12 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+app.use("/auth", authRoutes);
+
+app.use("/charger-requests", requestsRoutes);
+
+app.use("/chargers", chargerRoutes);
+
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
     console.log(`Prisma Studio: npx prisma studio`);
@@ -41,4 +50,5 @@ app.listen(port, () => {
 process.on("beforeExit", async () => {
     await prisma.$disconnect();
 });
+
 
